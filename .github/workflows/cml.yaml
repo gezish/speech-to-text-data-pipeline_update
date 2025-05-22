@@ -1,38 +1,16 @@
 name: CML
-on: [push, pull_request]
+on: [push]
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
-      # Set up Python environment
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      # Install dependencies
-      - name: Install dependencies
-        run: |
-          pip install cml
-          pip install pyspark kafka-python
-
-      # Run your pipeline/test
-      - name: Run pipeline
-        run: |
-          echo "Running Kafka producer..."
-          python src/kafka_producer.py
-
-          echo "Starting Spark streaming simulation..."
-          # You can simulate Spark logic here or skip if not needed for demo
-
-          echo "Generating CML report..."
-          echo "## 📊 Pipeline Report\n\n- Kafka event sent successfully." > report.md
-
-      # Post result to GitHub PR
-      - name: Send CML report
-        run: |
-          cml-send-comment report.md
+      - uses: actions/checkout@v2
+      - uses: docker://ghcr.io/iterative/cml:0-docker
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        entrypoint: ["sh", "-c"]
+        args:
+          - |
+            echo "## Report" > report.md
+            git diff >> report.md
+            cml-send-comment report.md
